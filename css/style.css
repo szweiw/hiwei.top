@@ -551,7 +551,6 @@ a.article-title:hover {
   color: #258fb8;
 }
 .article-entry {
-  word-wrap: break-word;
   color: #555;
   padding: 0 20px;
 }
@@ -567,6 +566,8 @@ a.article-title:hover {
 .article-entry table {
   line-height: 1.6em;
   margin: 1.6em 0;
+  text-indent: 2em; /*首行缩进*/
+  word-wrap: break-word;
 }
 .article-entry h1,
 .article-entry h2,
