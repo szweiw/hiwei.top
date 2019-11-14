@@ -551,6 +551,7 @@ a.article-title:hover {
   color: #258fb8;
 }
 .article-entry {
+  word-wrap: break-word;
   color: #555;
   padding: 0 20px;
 }
