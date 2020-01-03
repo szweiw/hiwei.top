@@ -87,8 +87,8 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <h1 id="升级squid代理服务至4-9"><a href="#升级squid代理服务至4-9" class="headerlink" title="升级squid代理服务至4.9"></a>升级squid代理服务至4.9</h1><p>　　两台生产squid，在启明天镜进行漏洞扫描时报版本太低，在squid官网（<a href="http://www.squid-cache.org）" target="_blank" rel="noopener">www.squid-cache.org）</a> 查询发现现网squid 3.5系列已经不再更新，准备直接升级至4.9。<br>　　服务器为CentOS 6及7，编译安装时报错，查询官网Known issues得知squid 4系列要求使用C++ 11，也即是GCC 4.9+，而CentOS的yum源上GCC最高才4.8.5，所以还得先编译安装GCC（当前最新版本9.2）。</p>
-<h2 id="安装GCC9-2"><a href="#安装GCC9-2" class="headerlink" title="安装GCC9.2"></a>安装GCC9.2</h2><h3 id="1、先升级c-编译器的相关依赖包"><a href="#1、先升级c-编译器的相关依赖包" class="headerlink" title="1、先升级c++编译器的相关依赖包"></a>1、先升级c++编译器的相关依赖包</h3><pre><code>yum clean all
+        <p>　　两台生产squid，在启明天镜进行漏洞扫描时报版本太低，在squid官网（<a href="http://www.squid-cache.org）" target="_blank" rel="noopener">www.squid-cache.org）</a> 查询发现现网squid 3.5系列已经不再更新，准备直接升级至4.9。<br>　　服务器为CentOS 6及7，编译安装时报错，查询官网Known issues得知squid 4系列要求使用C++ 11，也即是GCC 4.9+，而CentOS的yum源上GCC最高才4.8.5，所以还得先编译安装GCC（当前最新版本9.2）。</p>
+<h1 id="安装GCC9-2"><a href="#安装GCC9-2" class="headerlink" title="安装GCC9.2"></a>安装GCC9.2</h1><h3 id="1、先升级c-编译器的相关依赖包"><a href="#1、先升级c-编译器的相关依赖包" class="headerlink" title="1、先升级c++编译器的相关依赖包"></a>1、先升级c++编译器的相关依赖包</h3><pre><code>yum clean all
 yum makecache
 yum install -y glibc-headers gcc-c++</code></pre><h3 id="2、下载安装包并解压"><a href="#2、下载安装包并解压" class="headerlink" title="2、下载安装包并解压"></a>2、下载安装包并解压</h3><pre><code>cd /usr/local/src
 wget http://10.121.2.5:31280/source/gcc/gcc-9.2.0.tar
@@ -104,12 +104,10 @@ gcc -v</code></pre><h3 id="8、替换老版本gcc的动态库"><a href="#8、替
 cp /usr/local/src/gcc-9.2.0/gcc-build/stage1-x86_64-pc-linux-gnu/libstdc++-v3/src/.libs/libstdc++.so.6.0.27 .
 rm -f libstdc++.so.6
 ln -s libstdc++.so.6.0.27 libstdc++.so.6
-strings /usr/lib64/libstdc++.so.6 | grep GLIBC</code></pre><p>###9、替换gcc可执行文件</p>
-<pre><code>whereis gcc
+strings /usr/lib64/libstdc++.so.6 | grep GLIBC</code></pre><h3 id="9、替换gcc可执行文件"><a href="#9、替换gcc可执行文件" class="headerlink" title="9、替换gcc可执行文件"></a>9、替换gcc可执行文件</h3><pre><code>whereis gcc
 cd /usr/bin
 mv gcc gcc.4.4.7
-ln -s /usr/local/bin/gcc /usr/bin/gcc</code></pre><p>##安装SQUID4.9</p>
-<pre><code>cd /usr/local/src
+ln -s /usr/local/bin/gcc /usr/bin/gcc</code></pre><h1 id="安装SQUID4-9-0"><a href="#安装SQUID4-9-0" class="headerlink" title="安装SQUID4.9.0"></a>安装SQUID4.9.0</h1><pre><code>cd /usr/local/src
 wget http://10.121.2.5:31280/source/squid/squid-4.9.tar.gz
 tar -zxvf squid-4.9.tar.gz
 cd squid-4.9
