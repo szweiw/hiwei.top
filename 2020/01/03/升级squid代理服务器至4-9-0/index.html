@@ -14,7 +14,7 @@
 <meta property="og:site_name" content="Hi,Wei!">
 <meta property="og:description" content="两台生产squid，在启明天镜进行漏洞扫描时报版本太低，在squid官网（www.squid-cache.org） 查询发现现网squid 3.5系列已经不再更新，准备直接升级至4.9。　　服务器为CentOS 6及7，编译安装时报错，查询官网Known issues得知squid 4系列要求使用C++ 11，也即是GCC 4.9+，而CentOS的yum源上GCC最高才4.8.5，所以还得先">
 <meta property="og:locale" content="UTF-8">
-<meta property="og:updated_time" content="2020-01-03T06:22:00.651Z">
+<meta property="og:updated_time" content="2020-01-03T06:40:34.947Z">
 <meta name="twitter:card" content="summary">
   
     <link rel="alternate" href="/atom.xml" title="Hi,Wei!" type="application/atom+xml">
@@ -93,10 +93,10 @@
 yum makecache
 yum install -y glibc-headers gcc-c++</code></pre><h3 id="2、下载安装包并解压"><a href="#2、下载安装包并解压" class="headerlink" title="2、下载安装包并解压"></a>2、下载安装包并解压</h3><pre><code>cd /usr/local/src
 wget http://10.121.2.5:31280/source/gcc/gcc-9.2.0.tar
-tar -xvf gcc-9.2.0.tar</code></pre><h3 id="3、下载供编译需求的依赖项"><a href="#3、下载供编译需求的依赖项" class="headerlink" title="3、下载供编译需求的依赖项"></a>3、下载供编译需求的依赖项</h3><p>   cd gcc-9.2.0<br>   ./contrib/download_prerequisites</p>
-<p>　　GCC官网建议执行./contrib/download_prerequisites这个脚本文件会帮我们下载、配置、安装依赖库，可以节约我们大量的时间和精力。但是下载速度太慢，所以我预先将gcc9.2.0对应的四个依赖包放进了上面的tar安装包里，只需要验证一下。</p>
-<h3 id="4、建立一个目录供编译出的文件存放"><a href="#4、建立一个目录供编译出的文件存放" class="headerlink" title="4、建立一个目录供编译出的文件存放"></a>4、建立一个目录供编译出的文件存放</h3><pre><code>mkdir gcc-build-6.1.0
-cd gcc-build-6.1.0</code></pre><h3 id="5、生成Makefile文件"><a href="#5、生成Makefile文件" class="headerlink" title="5、生成Makefile文件"></a>5、生成Makefile文件</h3><pre><code>../configure -enable-checking=release -enable-languages=c,c++ -disable-multilib</code></pre><h3 id="6、编译"><a href="#6、编译" class="headerlink" title="6、编译"></a>6、编译</h3><pre><code>make </code></pre><p>　　此步骤非常耗时，虚拟机耗时近3小时。如果出现 /lib/cpp fails sanity check 错误，是由于c++编译器的相关package没有安装，参考第１步。</p>
+tar -xvf gcc-9.2.0.tar</code></pre><h3 id="3、下载供编译需求的依赖项"><a href="#3、下载供编译需求的依赖项" class="headerlink" title="3、下载供编译需求的依赖项"></a>3、下载供编译需求的依赖项</h3><p>　　GCC官网建议执行./contrib/download_prerequisites这个脚本文件会帮我们下载、配置、安装依赖库，可以节约我们大量的时间和精力。但是下载速度太慢，所以我预先将gcc9.2.0对应的四个依赖包放进了上面的tar安装包里，只需要验证一下。</p>
+<pre><code>cd gcc-9.2.0
+./contrib/download_prerequisites</code></pre><h3 id="4、建立一个目录供编译出的文件存放"><a href="#4、建立一个目录供编译出的文件存放" class="headerlink" title="4、建立一个目录供编译出的文件存放"></a>4、建立一个目录供编译出的文件存放</h3><pre><code>mkdir gcc-build-6.1.0
+cd gcc-build-6.1.0</code></pre><h3 id="5、生成Makefile文件"><a href="#5、生成Makefile文件" class="headerlink" title="5、生成Makefile文件"></a>5、生成Makefile文件</h3><pre><code>../configure --enable-checking=release --enable-languages=c,c++ --disable-multilib</code></pre><h3 id="6、编译"><a href="#6、编译" class="headerlink" title="6、编译"></a>6、编译</h3><pre><code>make </code></pre><p>　　此步骤非常耗时，虚拟机耗时近3小时。如果出现 /lib/cpp fails sanity check 错误，是由于c++编译器的相关package没有安装，参考第１步。</p>
 <h3 id="7、安装"><a href="#7、安装" class="headerlink" title="7、安装"></a>7、安装</h3><pre><code>make install</code></pre><p>　　安装需要root权限！完成后查看安装情况:</p>
 <pre><code>ls /usr/local/bin | grep gcc
 gcc -v</code></pre><h3 id="8、替换老版本gcc的动态库"><a href="#8、替换老版本gcc的动态库" class="headerlink" title="8、替换老版本gcc的动态库"></a>8、替换老版本gcc的动态库</h3><pre><code>strings /usr/lib64/libstdc++.so.6 | grep GLIBC</code></pre><p>　　从输出可以看出，gcc的动态库还是旧版本的。说明出现这些问题，是因为升级gcc时，生成的动态库没有替换老版本gcc的动态库。先找出编译gcc时生成的最新动态库：</p>
