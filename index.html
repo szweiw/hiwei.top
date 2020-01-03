@@ -87,57 +87,68 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p>#升级squid代理服务至4.9</p>
-<p>　　两台生产squid，在启明天镜进行漏洞扫描时报版本太低，在squid官网（<a href="http://www.squid-cache.org）" target="_blank" rel="noopener">www.squid-cache.org）</a> 查询发现现网squid 3.5系列已经不再更新，准备直接升级至4.9。<br>　　服务器为CentOS 6及7，编译安装时报错，查询官网Known issues得知squid 4系列要求使用C++ 11，也即是GCC 4.9+，而CentOS的yum源上GCC最高才4.8.5，所以还得先编译安装GCC（当前最新版本9.2）。</p>
-<p>##安装GCC9.2<br>###1、先升级c++编译器的相关依赖包</p>
-<blockquote>
-<p>yum clean all<br> yum makecache<br> yum install -y glibc-headers gcc-c++</p>
-</blockquote>
-<p>###2、下载安装包并解压</p>
-<blockquote>
-<p>cd /usr/local/src<br> wget <a href="http://10.121.2.5:31280/source/gcc/gcc-9.2.0.tar" target="_blank" rel="noopener">http://10.121.2.5:31280/source/gcc/gcc-9.2.0.tar</a><br> tar -xvf gcc-9.2.0.tar</p>
-</blockquote>
-<p>###3、下载供编译需求的依赖项</p>
-<blockquote>
-<p>cd gcc-9.2.0<br> ./contrib/download_prerequisites<br>　　GCC官网建议执行./contrib/download_prerequisites这个脚本文件会帮我们下载、配置、安装依赖库，可以节约我们大量的时间和精力。但是下载速度太慢，所以我预先将gcc9.2.0对应的四个依赖包放进了上面的tar安装包里，只需要验证一下。</p>
-</blockquote>
-<p>###4、建立一个目录供编译出的文件存放</p>
-<blockquote>
-<p>mkdir gcc-build-6.1.0<br> cd gcc-build-6.1.0</p>
-</blockquote>
-<p>###5、生成Makefile文件</p>
-<blockquote>
-<p>../configure -enable-checking=release -enable-languages=c,c++ -disable-multilib</p>
-</blockquote>
-<p>###6、编译</p>
-<blockquote>
-<p>make<br>　　此步骤非常耗时，虚拟机耗时近3小时。如果出现 /lib/cpp fails sanity check 错误，是由于c++编译器的相关package没有安装，参考第１步。</p>
-</blockquote>
-<p>###7、安装</p>
-<blockquote>
-<p>make install<br>　　安装需要root权限！完成后查看安装情况:<br>ls /usr/local/bin | grep gcc<br> gcc -v</p>
-</blockquote>
-<p>###8、替换老版本gcc的动态库</p>
-<blockquote>
-<p>strings /usr/lib64/libstdc++.so.6 | grep GLIBC<br>　　从输出可以看出，gcc的动态库还是旧版本的。说明出现这些问题，是因为升级gcc时，生成的动态库没有替换老版本gcc的动态库。先找出编译gcc时生成的最新动态库：</p>
-</blockquote>
-<blockquote>
-<p>find / -name “libstdc++.so*”<br>　　将上面的最新动态库libstdc++.so.6.0.27复制到/usr/lib64目录下，创建软连接并检查。这时已经可以看到GLIBC_2.6及GLIBCXX_3.4.27。<br>cd /usr/lib64<br> cp /usr/local/src/gcc-9.2.0/gcc-build/stage1-x86_64-pc-linux-gnu/libstdc++-v3/src/.libs/libstdc++.so.6.0.27 .<br> rm -f libstdc++.so.6<br> ln -s libstdc++.so.6.0.27 libstdc++.so.6<br> strings /usr/lib64/libstdc++.so.6 | grep GLIBC</p>
-</blockquote>
-<p>###9、替换gcc可执行文件</p>
-<blockquote>
-<p>whereis gcc<br>cd /usr/bin<br>mv gcc gcc.4.4.7<br>ln -s /usr/local/bin/gcc /usr/bin/gcc</p>
-</blockquote>
-<p>##安装SQUID4.9</p>
-<blockquote>
-<p>cd /usr/local/src<br> wget <a href="http://10.121.2.5:31280/source/squid/squid-4.9.tar.gz" target="_blank" rel="noopener">http://10.121.2.5:31280/source/squid/squid-4.9.tar.gz</a><br> tar -zxvf squid-4.9.tar.gz<br> cd squid-4.9<br> ./configure ‘–prefix=/usr/local/squid-4.9.0’ <br>    ‘–with-included-ltdl’ <br>    ‘–enable-internal-dns’ <br>    ‘–disable-strict-error-checking’ <br>    ‘–disable-dependency-tracking’ <br>    ‘–enable-arp-acl’ <br>    ‘–enable-follow-x-forwarded-for’ <br>    ‘–enable-cache-digests’ <br>    ‘–enable-cachemgr-hostname=localhost’ <br>    ‘–enable-delay-pools’ <br>    ‘–enable-epoll’ <br>    ‘–enable-icap-client’ <br>    ‘–enable-ident-lookups’ <br>    ‘–enable-linux-netfilter’ <br>    ‘–enable-referer-log’ <br>    ‘–enable-removal-policies=heap,lru’ <br>    ‘–enable-ssl’ <br>    ‘–enable-useragent-log’ <br>    ‘–enable-wccpv2’ <br>    ‘–enable-esi’ <br>    ‘–enable-gnuregex’ <br>    ‘–enable-underscore’ <br>    ‘–disable-mempools’ <br>    ‘–enable-http-violations’ <br>    ‘–with-aio’ <br>    ‘–with-default-user=squid’ <br>    ‘–with-filedescriptors=65536’ <br>    ‘–with-dl’ <br>    ‘–with-openssl’ <br>    ‘–with-pthreads’<br> make &amp;&amp; make install</p>
-</blockquote>
-<p>　　最后将生产环境的配置文件复制过来，修改服务文件，启动服务进行验证。</p>
+        <h1 id="升级squid代理服务至4-9"><a href="#升级squid代理服务至4-9" class="headerlink" title="升级squid代理服务至4.9"></a>升级squid代理服务至4.9</h1><p>　　两台生产squid，在启明天镜进行漏洞扫描时报版本太低，在squid官网（<a href="http://www.squid-cache.org）" target="_blank" rel="noopener">www.squid-cache.org）</a> 查询发现现网squid 3.5系列已经不再更新，准备直接升级至4.9。<br>　　服务器为CentOS 6及7，编译安装时报错，查询官网Known issues得知squid 4系列要求使用C++ 11，也即是GCC 4.9+，而CentOS的yum源上GCC最高才4.8.5，所以还得先编译安装GCC（当前最新版本9.2）。</p>
+<h2 id="安装GCC9-2"><a href="#安装GCC9-2" class="headerlink" title="安装GCC9.2"></a>安装GCC9.2</h2><h3 id="1、先升级c-编译器的相关依赖包"><a href="#1、先升级c-编译器的相关依赖包" class="headerlink" title="1、先升级c++编译器的相关依赖包"></a>1、先升级c++编译器的相关依赖包</h3><pre><code>yum clean all
+yum makecache
+yum install -y glibc-headers gcc-c++</code></pre><h3 id="2、下载安装包并解压"><a href="#2、下载安装包并解压" class="headerlink" title="2、下载安装包并解压"></a>2、下载安装包并解压</h3><pre><code>cd /usr/local/src
+wget http://10.121.2.5:31280/source/gcc/gcc-9.2.0.tar
+tar -xvf gcc-9.2.0.tar</code></pre><h3 id="3、下载供编译需求的依赖项"><a href="#3、下载供编译需求的依赖项" class="headerlink" title="3、下载供编译需求的依赖项"></a>3、下载供编译需求的依赖项</h3><p>   cd gcc-9.2.0<br>   ./contrib/download_prerequisites</p>
+<p>　　GCC官网建议执行./contrib/download_prerequisites这个脚本文件会帮我们下载、配置、安装依赖库，可以节约我们大量的时间和精力。但是下载速度太慢，所以我预先将gcc9.2.0对应的四个依赖包放进了上面的tar安装包里，只需要验证一下。</p>
+<h3 id="4、建立一个目录供编译出的文件存放"><a href="#4、建立一个目录供编译出的文件存放" class="headerlink" title="4、建立一个目录供编译出的文件存放"></a>4、建立一个目录供编译出的文件存放</h3><pre><code>mkdir gcc-build-6.1.0
+cd gcc-build-6.1.0</code></pre><h3 id="5、生成Makefile文件"><a href="#5、生成Makefile文件" class="headerlink" title="5、生成Makefile文件"></a>5、生成Makefile文件</h3><pre><code>../configure -enable-checking=release -enable-languages=c,c++ -disable-multilib</code></pre><h3 id="6、编译"><a href="#6、编译" class="headerlink" title="6、编译"></a>6、编译</h3><pre><code>make </code></pre><p>　　此步骤非常耗时，虚拟机耗时近3小时。如果出现 /lib/cpp fails sanity check 错误，是由于c++编译器的相关package没有安装，参考第１步。</p>
+<h3 id="7、安装"><a href="#7、安装" class="headerlink" title="7、安装"></a>7、安装</h3><pre><code>make install</code></pre><p>　　安装需要root权限！完成后查看安装情况:</p>
+<pre><code>ls /usr/local/bin | grep gcc
+gcc -v</code></pre><h3 id="8、替换老版本gcc的动态库"><a href="#8、替换老版本gcc的动态库" class="headerlink" title="8、替换老版本gcc的动态库"></a>8、替换老版本gcc的动态库</h3><pre><code>strings /usr/lib64/libstdc++.so.6 | grep GLIBC</code></pre><p>　　从输出可以看出，gcc的动态库还是旧版本的。说明出现这些问题，是因为升级gcc时，生成的动态库没有替换老版本gcc的动态库。先找出编译gcc时生成的最新动态库：</p>
+<pre><code>find / -name &quot;libstdc++.so*&quot;</code></pre><p>　　将上面的最新动态库libstdc++.so.6.0.27复制到/usr/lib64目录下，创建软连接并检查。这时已经可以看到GLIBC_2.6及GLIBCXX_3.4.27。</p>
+<pre><code>cd /usr/lib64
+cp /usr/local/src/gcc-9.2.0/gcc-build/stage1-x86_64-pc-linux-gnu/libstdc++-v3/src/.libs/libstdc++.so.6.0.27 .
+rm -f libstdc++.so.6
+ln -s libstdc++.so.6.0.27 libstdc++.so.6
+strings /usr/lib64/libstdc++.so.6 | grep GLIBC</code></pre><p>###9、替换gcc可执行文件</p>
+<pre><code>whereis gcc
+cd /usr/bin
+mv gcc gcc.4.4.7
+ln -s /usr/local/bin/gcc /usr/bin/gcc</code></pre><p>##安装SQUID4.9</p>
+<pre><code>cd /usr/local/src
+wget http://10.121.2.5:31280/source/squid/squid-4.9.tar.gz
+tar -zxvf squid-4.9.tar.gz
+cd squid-4.9
+./configure &apos;--prefix=/usr/local/squid-4.9.0&apos; \
+    &apos;--with-included-ltdl&apos; \
+    &apos;--enable-internal-dns&apos; \
+    &apos;--disable-strict-error-checking&apos; \
+    &apos;--disable-dependency-tracking&apos; \
+    &apos;--enable-arp-acl&apos; \
+    &apos;--enable-follow-x-forwarded-for&apos; \
+    &apos;--enable-cache-digests&apos; \
+    &apos;--enable-cachemgr-hostname=localhost&apos; \
+    &apos;--enable-delay-pools&apos; \
+    &apos;--enable-epoll&apos; \
+    &apos;--enable-icap-client&apos; \
+    &apos;--enable-ident-lookups&apos; \
+    &apos;--enable-linux-netfilter&apos; \
+    &apos;--enable-referer-log&apos; \
+    &apos;--enable-removal-policies=heap,lru&apos; \
+    &apos;--enable-ssl&apos; \
+    &apos;--enable-useragent-log&apos; \
+    &apos;--enable-wccpv2&apos; \
+    &apos;--enable-esi&apos; \
+    &apos;--enable-gnuregex&apos; \
+    &apos;--enable-underscore&apos; \
+    &apos;--disable-mempools&apos; \
+    &apos;--enable-http-violations&apos; \
+    &apos;--with-aio&apos; \
+    &apos;--with-default-user=squid&apos; \
+    &apos;--with-filedescriptors=65536&apos; \
+    &apos;--with-dl&apos; \
+    &apos;--with-openssl&apos; \
+    &apos;--with-pthreads&apos;
+make &amp;&amp; make install</code></pre><p>　　最后将生产环境的配置文件复制过来，修改服务文件，启动服务进行验证。</p>
 
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://hiwei.top/2020/01/03/%E5%8D%87%E7%BA%A7squid%E4%BB%A3%E7%90%86%E6%9C%8D%E5%8A%A1%E5%99%A8%E8%87%B34-9-0/" data-id="ck4xrb54l0001ix3l3o22bet0" class="article-share-link">Share</a>
+      <a data-url="https://hiwei.top/2020/01/03/%E5%8D%87%E7%BA%A7squid%E4%BB%A3%E7%90%86%E6%9C%8D%E5%8A%A1%E5%99%A8%E8%87%B34-9-0/" data-id="ck4xrpvhk0002kk3l009tc5kp" class="article-share-link">Share</a>
       
       
     </footer>
@@ -178,7 +189,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://hiwei.top/2019/12/13/CISP%E5%9F%B9%E8%AE%AD%E8%AE%A4%E8%AF%81/" data-id="ck4xrb53k0000ix3l9s5jgm5p" class="article-share-link">Share</a>
+      <a data-url="https://hiwei.top/2019/12/13/CISP%E5%9F%B9%E8%AE%AD%E8%AE%A4%E8%AF%81/" data-id="ck4xrpvh70001kk3lhka96u69" class="article-share-link">Share</a>
       
       
     </footer>
@@ -215,7 +226,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://hiwei.top/2019/11/13/%E7%AC%AC%E4%BA%8C%E6%AC%A1%E5%BC%80%E5%BC%A0/" data-id="ck4xrb5570003ix3lbk5r4u95" class="article-share-link">Share</a>
+      <a data-url="https://hiwei.top/2019/11/13/%E7%AC%AC%E4%BA%8C%E6%AC%A1%E5%BC%80%E5%BC%A0/" data-id="ck4xrpvgg0000kk3lfq81272o" class="article-share-link">Share</a>
       
       
     </footer>
