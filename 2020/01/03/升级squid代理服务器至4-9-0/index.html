@@ -7,14 +7,14 @@
   
   <title>升级squid代理服务器至4.9.0 | Hi,Wei!</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="#升级squid代理服务至4.9 　　两台生产squid，在启明天镜进行漏洞扫描时报版本太低，在squid官网（www.squid-cache.org）查询发现现网squid 3.5系列已经不再更新，准备直接升级至4.9。　　服务器为CentOS 6及7，编译安装时报错，查询官网Known issues得知squid 4系列要求使用C++ 11，也即是GCC 4.9+，而CentOS的yum源上G">
+  <meta name="description" content="#升级squid代理服务至4.9 　　两台生产squid，在启明天镜进行漏洞扫描时报版本太低，在squid官网（www.squid-cache.org） 查询发现现网squid 3.5系列已经不再更新，准备直接升级至4.9。　　服务器为CentOS 6及7，编译安装时报错，查询官网Known issues得知squid 4系列要求使用C++ 11，也即是GCC 4.9+，而CentOS的yum源上">
 <meta property="og:type" content="article">
 <meta property="og:title" content="升级squid代理服务器至4.9.0">
 <meta property="og:url" content="https:&#x2F;&#x2F;hiwei.top&#x2F;2020&#x2F;01&#x2F;03&#x2F;%E5%8D%87%E7%BA%A7squid%E4%BB%A3%E7%90%86%E6%9C%8D%E5%8A%A1%E5%99%A8%E8%87%B34-9-0&#x2F;index.html">
 <meta property="og:site_name" content="Hi,Wei!">
-<meta property="og:description" content="#升级squid代理服务至4.9 　　两台生产squid，在启明天镜进行漏洞扫描时报版本太低，在squid官网（www.squid-cache.org）查询发现现网squid 3.5系列已经不再更新，准备直接升级至4.9。　　服务器为CentOS 6及7，编译安装时报错，查询官网Known issues得知squid 4系列要求使用C++ 11，也即是GCC 4.9+，而CentOS的yum源上G">
+<meta property="og:description" content="#升级squid代理服务至4.9 　　两台生产squid，在启明天镜进行漏洞扫描时报版本太低，在squid官网（www.squid-cache.org） 查询发现现网squid 3.5系列已经不再更新，准备直接升级至4.9。　　服务器为CentOS 6及7，编译安装时报错，查询官网Known issues得知squid 4系列要求使用C++ 11，也即是GCC 4.9+，而CentOS的yum源上">
 <meta property="og:locale" content="UTF-8">
-<meta property="og:updated_time" content="2020-01-03T03:44:30.910Z">
+<meta property="og:updated_time" content="2020-01-03T06:14:16.084Z">
 <meta name="twitter:card" content="summary">
   
     <link rel="alternate" href="/atom.xml" title="Hi,Wei!" type="application/atom+xml">
@@ -89,7 +89,7 @@
     <div class="article-entry" itemprop="articleBody">
       
         <p>#升级squid代理服务至4.9</p>
-<p>　　两台生产squid，在启明天镜进行漏洞扫描时报版本太低，在squid官网（<a href="http://www.squid-cache.org）查询发现现网squid" target="_blank" rel="noopener">www.squid-cache.org）查询发现现网squid</a> 3.5系列已经不再更新，准备直接升级至4.9。<br>　　服务器为CentOS 6及7，编译安装时报错，查询官网Known issues得知squid 4系列要求使用C++ 11，也即是GCC 4.9+，而CentOS的yum源上GCC最高才4.8.5，所以还得先编译安装GCC（当前最新版本9.2）。</p>
+<p>　　两台生产squid，在启明天镜进行漏洞扫描时报版本太低，在squid官网（<a href="http://www.squid-cache.org）" target="_blank" rel="noopener">www.squid-cache.org）</a> 查询发现现网squid 3.5系列已经不再更新，准备直接升级至4.9。<br>　　服务器为CentOS 6及7，编译安装时报错，查询官网Known issues得知squid 4系列要求使用C++ 11，也即是GCC 4.9+，而CentOS的yum源上GCC最高才4.8.5，所以还得先编译安装GCC（当前最新版本9.2）。</p>
 <p>##安装GCC9.2<br>###1、先升级c++编译器的相关依赖包</p>
 <blockquote>
 <p>yum clean all<br> yum makecache<br> yum install -y glibc-headers gcc-c++</p>
